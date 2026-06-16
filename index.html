@@ -194,6 +194,122 @@
       margin-top: 8px;
       margin-bottom: 36px;
     }
+
+    /* ── MUSIC PLAYER ── */
+    #music-player {
+      position: fixed;
+      bottom: 24px;
+      left: 24px;
+      z-index: 200;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 8px;
+    }
+
+    #player-panel {
+      background: rgba(255,255,255,0.92);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1.5px solid var(--cream-dark);
+      border-radius: 16px;
+      padding: 16px;
+      width: 190px;
+      box-shadow: 0 8px 32px rgba(20,28,56,0.12);
+      display: none;
+      flex-direction: column;
+      gap: 12px;
+    }
+    #player-panel.open { display: flex; }
+
+    #player-track-info {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    #track-icon { font-size: 22px; }
+
+    #player-controls {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+    }
+
+    .ctrl-btn {
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-size: 18px;
+      padding: 4px;
+      border-radius: 8px;
+      transition: transform 0.15s, background 0.15s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--navy);
+    }
+    .ctrl-btn:hover { transform: scale(1.15); background: var(--cream); }
+    .ctrl-btn.active-mode { background: var(--cream-dark); }
+
+    #player-pill {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(255,255,255,0.88);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1.5px solid var(--cream-dark);
+      border-radius: 100px;
+      padding: 7px 12px;
+      cursor: pointer;
+      box-shadow: 0 4px 16px rgba(20,28,56,0.1);
+      transition: box-shadow 0.2s, transform 0.2s;
+      user-select: none;
+    }
+    #player-pill:hover { box-shadow: 0 6px 20px rgba(20,28,56,0.15); transform: translateY(-1px); }
+
+    #player-mode-icon { font-size: 14px; line-height: 1; }
+
+    #freq-bars {
+      display: flex;
+      align-items: flex-end;
+      gap: 3px;
+      height: 18px;
+    }
+    .freq-bar {
+      width: 3px;
+      background: var(--periwinkle);
+      border-radius: 2px;
+      height: 4px;
+      transition: height 0.08s ease;
+    }
+
+    #pill-playbtn {
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: var(--navy);
+      padding: 0;
+      display: flex;
+      align-items: center;
+      opacity: 0.7;
+      transition: opacity 0.2s;
+    }
+    #pill-playbtn:hover { opacity: 1; }
+
+    /* Rain canvas */
+    #rain-canvas {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      pointer-events: none;
+      z-index: 10;
+      opacity: 0;
+      transition: opacity 1.5s ease;
+    }
+    #rain-canvas.active { opacity: 1; }
+
   </style>
 </head>
 <body>
@@ -496,13 +612,51 @@
 
 </main>
 
+  <!-- ── MUSIC PLAYER ── -->
+  <div id="music-player">
+    <!-- Collapsed pill -->
+    <div id="player-pill" onclick="togglePlayer()">
+      <div id="player-mode-icon">☀️</div>
+      <div id="freq-bars">
+        <div class="freq-bar" id="bar1"></div>
+        <div class="freq-bar" id="bar2"></div>
+        <div class="freq-bar" id="bar3"></div>
+      </div>
+      <button id="pill-playbtn" onclick="event.stopPropagation();togglePlay()">
+        <svg id="pill-play-icon" viewBox="0 0 24 24" fill="currentColor" width="13" height="13"><path d="M8 5v14l11-7z"/></svg>
+        <svg id="pill-pause-icon" viewBox="0 0 24 24" fill="currentColor" width="13" height="13" style="display:none"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
+      </button>
+    </div>
+
+    <!-- Expanded panel -->
+    <div id="player-panel">
+      <div id="player-track-info">
+        <span id="track-icon">☀️</span>
+        <div>
+          <div id="track-name" style="font-size:13px;font-weight:600;color:var(--navy)">Sunny Garden</div>
+          <div style="font-size:11px;color:var(--ink-muted);margin-top:1px">ambient · low volume</div>
+        </div>
+      </div>
+      <div id="player-controls">
+        <button class="ctrl-btn" onclick="switchMode('sunny')" id="btn-sunny" title="Sunny day">☀️</button>
+        <button class="ctrl-btn" onclick="togglePlay()" id="main-playbtn">
+          <svg id="main-play-icon" viewBox="0 0 24 24" fill="currentColor" width="16" height="16"><path d="M8 5v14l11-7z"/></svg>
+          <svg id="main-pause-icon" viewBox="0 0 24 24" fill="currentColor" width="16" height="16" style="display:none"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
+        </button>
+        <button class="ctrl-btn" onclick="switchMode('rain')" id="btn-rain" title="Rainy day">🌧️</button>
+      </div>
+      <div style="font-size:10px;color:var(--soft);text-align:center;margin-top:6px;font-family:'DM Mono',monospace;letter-spacing:0.05em">click outside to close</div>
+    </div>
+  </div>
+
+  <!-- Rain overlay -->
+  <canvas id="rain-canvas"></canvas>
+
+
 <script>
   document.addEventListener("DOMContentLoaded", function () {
-
-    // Icons
     if (typeof lucide !== "undefined") lucide.createIcons();
 
-    // Section fade-in on scroll
     const sections = document.querySelectorAll('.section');
     const revealObs = new IntersectionObserver((entries) => {
       entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
@@ -510,11 +664,9 @@
     sections.forEach(s => revealObs.observe(s));
     document.getElementById('home').classList.add('visible');
 
-    // Nav pill animation — active state
     const navLinks = document.querySelectorAll('.tnav-link[data-section]');
     const sectionIds = ['home', 'about', 'experience', 'projects'];
     const sectionEls = sectionIds.map(id => document.getElementById(id)).filter(Boolean);
-
     const navObs = new IntersectionObserver((entries) => {
       entries.forEach(e => {
         if (e.isIntersecting) {
@@ -526,12 +678,198 @@
     }, { threshold: 0.35 });
     sectionEls.forEach(s => navObs.observe(s));
 
-    // Topnav shadow on scroll
     const topnav = document.getElementById('topnav');
     window.addEventListener('scroll', () => {
       topnav.classList.toggle('scrolled', window.scrollY > 40);
     });
+  });
+</script>
 
+<script>
+  // ── MUSIC PLAYER — global scope so onclick attrs work ──
+  const tracks = {
+    sunny: { src: 'assets/music/sunny.mp3', name: 'Sunny Garden', icon: '☀️' },
+    rain:  { src: 'assets/music/rain.mp3',  name: 'Rainy Day',    icon: '🌧️' }
+  };
+
+  let currentMode = 'sunny';
+  let isPlaying = false;
+  let audioCtx = null;
+  let analyser = null;
+  let source = null;
+  let animFrame = null;
+  let rainFrame = null;
+  let scrollTriggered = false;
+
+  const audio = new Audio();
+  audio.loop = true;
+  audio.volume = 0.18;
+  audio.src = tracks.sunny.src;
+
+  function setupAnalyser() {
+    if (audioCtx) return;
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    analyser = audioCtx.createAnalyser();
+    analyser.fftSize = 64;
+    source = audioCtx.createMediaElementSource(audio);
+    source.connect(analyser);
+    analyser.connect(audioCtx.destination);
+  }
+
+  function togglePlay() {
+    setupAnalyser();
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+    if (isPlaying) {
+      audio.pause();
+      isPlaying = false;
+      cancelAnimationFrame(animFrame);
+      animateIdle();
+    } else {
+      audio.play().catch(() => {});
+      isPlaying = true;
+      animateBars();
+    }
+    updatePlayIcons();
+    if (currentMode === 'rain') updateRain();
+  }
+
+  function switchMode(mode) {
+    currentMode = mode;
+    const t = tracks[mode];
+    audio.src = t.src;
+    audio.volume = 0.18;
+    document.getElementById('track-name').textContent = t.name;
+    document.getElementById('track-icon').textContent = t.icon;
+    document.getElementById('player-mode-icon').textContent = t.icon;
+    document.getElementById('btn-sunny').classList.toggle('active-mode', mode === 'sunny');
+    document.getElementById('btn-rain').classList.toggle('active-mode', mode === 'rain');
+    if (isPlaying) { audio.play().catch(() => {}); animateBars(); }
+    updateRain();
+  }
+
+  function updateRain() {
+    const canvas = document.getElementById('rain-canvas');
+    if (currentMode === 'rain' && isPlaying) {
+      canvas.classList.add('active');
+      startRain();
+    } else {
+      canvas.classList.remove('active');
+      cancelAnimationFrame(rainFrame);
+    }
+  }
+
+  function updatePlayIcons() {
+    document.getElementById('pill-play-icon').style.display  = isPlaying ? 'none'  : 'block';
+    document.getElementById('pill-pause-icon').style.display = isPlaying ? 'block' : 'none';
+    document.getElementById('main-play-icon').style.display  = isPlaying ? 'none'  : 'block';
+    document.getElementById('main-pause-icon').style.display = isPlaying ? 'block' : 'none';
+  }
+
+  function setBarHeights(h) {
+    ['bar1','bar2','bar3'].forEach((id,i) => {
+      const el = document.getElementById(id);
+      el.style.height = h[i] + 'px';
+    });
+  }
+
+  // Idle gentle pulse when paused
+  let idleFrame = null;
+  const idleOffsets = [0, 1.2, 2.4];
+  function animateIdle() {
+    const t = Date.now() / 400;
+    setBarHeights(idleOffsets.map(o => 3 + Math.abs(Math.sin(t + o)) * 9));
+    idleFrame = requestAnimationFrame(animateIdle);
+  }
+
+  function animateBars() {
+    cancelAnimationFrame(idleFrame);
+    if (!analyser) { animFrame = requestAnimationFrame(animateBars); return; }
+    const data = new Uint8Array(analyser.frequencyBinCount);
+    analyser.getByteFrequencyData(data);
+    const avg = (arr, s, e) => arr.slice(s, e).reduce((a, b) => a + b, 0) / (e - s);
+    setBarHeights([
+      Math.max(3, (avg(data,1,3)/255)*18),
+      Math.max(3, (avg(data,3,6)/255)*18),
+      Math.max(3, (avg(data,6,9)/255)*18)
+    ]);
+    animFrame = requestAnimationFrame(animateBars);
+  }
+
+  // Start idle animation immediately on page load
+  animateIdle();
+
+  function togglePlayer() {
+    document.getElementById('player-panel').classList.toggle('open');
+  }
+
+  document.addEventListener('click', function(e) {
+    const player = document.getElementById('music-player');
+    if (player && !player.contains(e.target)) {
+      document.getElementById('player-panel').classList.remove('open');
+    }
+  });
+
+  // Auto-play on scroll
+  window.addEventListener('scroll', function() {
+    if (scrollTriggered || window.scrollY <= 120) return;
+    scrollTriggered = true;
+    setupAnalyser();
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+    audio.play().then(() => {
+      isPlaying = true;
+      updatePlayIcons();
+      animateBars();
+    }).catch(() => {});
+  }, { passive: true });
+
+  // ── RAIN EFFECT ──
+  const rainCanvas = document.getElementById('rain-canvas');
+  const rainCtx = rainCanvas.getContext('2d');
+  let drops = [];
+
+  function resizeRain() {
+    rainCanvas.width  = window.innerWidth;
+    rainCanvas.height = window.innerHeight;
+  }
+  resizeRain();
+  window.addEventListener('resize', resizeRain);
+
+  (function initDrops() {
+    for (let i = 0; i < 55; i++) {
+      drops.push({
+        x: Math.random() * window.innerWidth,
+        y: Math.random() * window.innerHeight,
+        len: Math.random() * 18 + 8,
+        speed: Math.random() * 2.5 + 1.5,
+        opacity: Math.random() * 0.25 + 0.08,
+        width: Math.random() * 0.8 + 0.3
+      });
+    }
+  })();
+
+  function startRain() {
+    cancelAnimationFrame(rainFrame);
+    function drawRain() {
+      rainCtx.clearRect(0, 0, rainCanvas.width, rainCanvas.height);
+      drops.forEach(d => {
+        rainCtx.beginPath();
+        rainCtx.moveTo(d.x, d.y);
+        rainCtx.lineTo(d.x - 1, d.y + d.len);
+        rainCtx.strokeStyle = `rgba(160,185,220,${d.opacity})`;
+        rainCtx.lineWidth = d.width;
+        rainCtx.stroke();
+        d.y += d.speed;
+        if (d.y > rainCanvas.height) { d.y = -d.len; d.x = Math.random() * rainCanvas.width; }
+      });
+      rainFrame = requestAnimationFrame(drawRain);
+    }
+    drawRain();
+  }
+
+  // Init active mode highlight after DOM ready
+  document.addEventListener('DOMContentLoaded', function() {
+    const btnSunny = document.getElementById('btn-sunny');
+    if (btnSunny) btnSunny.classList.add('active-mode');
   });
 </script>
 </body>
